@@ -29,13 +29,19 @@ def drawPianorollPlot(score):
 
 def onMidiFileChange(inputMidiFile):
     if(inputMidiFile == None):
-        return gr.update(visible=False), gr.update(visible=False)
+        return gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
     else:
-        return gr.update(visible=True), gr.update(visible=True, label=os.path.basename(inputMidiFile.name), value=drawPianorollPlot(inputMidiFile)) # TODO 주석달기
-        # TODO 좀 이상한거 보완하기
+        return gr.update(visible=True, label=os.path.basename(inputMidiFile.name), value=drawPianorollPlot(inputMidiFile)), gr.update(visible=True, value=midiToAudio(inputMidiFile)), gr.update(visible=True)
 
-def onPlayButtonPress(inputMidiFile):
-    return
+def midiToAudio(inputMidiFile):
+    output_wav = "output.wav"
+    FluidSynth().midi_to_audio(inputMidiFile.name, output_wav)
+
+    return output_wav
+
+def onGenerateButtonPressed(inputMidiFile):
+    outputMidi = ScarlattiMelodyModel.runModel(inputMidi=inputMidiFile)
+    return gr.update(visible=True, value=outputMidi)
 
 #********gradio 인터페이스 코드********
 
@@ -43,34 +49,39 @@ with gr.Blocks(title="Scarlatti Doodle") as demo:
     gr.Markdown("# Scarlatti Doodle")
     gr.Markdown("Google Bach doodle but it's Scarlatti")
 
+    with gr.Accordion(label="About this project", open=False):
+                    gr.Markdown("accordion!")
+    
     gr.Markdown("---")
 
     with gr.Row():
 
         with gr.Column():
-            gr.Markdown("column1")
+            gr.Markdown("input")
             input_midi_file = gr.File(file_types= [".midi", ".mid"], label="upload midi file")
 
             pianoroll_plot = gr.Plot(visible=False)
-            audio = gr.Audio(label="hi", interactive=False, sources=[],type="filepath")
-            play_button1 = gr.Button(value="▶️ play", visible=False)
+            audio1 = gr.Audio(label=None, interactive=False, sources=[],type="filepath", visible=False)
             
             with gr.Accordion(label="input midi settings",open=False):
                 gr.Markdown("accordion!")
 
+            generateButton = gr.Button(value="Generate", variant="primary", visible=False)
+
         with gr.Column():
-            gr.Markdown("column2")
+            gr.Markdown("result")
+            output_midi_file = gr.File(label=None, interactive=False, type="filepath", visible=False)
 
     # ********ui 함수들********
 
     input_midi_file.change(fn=onMidiFileChange, 
                            inputs=input_midi_file,
-                           outputs= [play_button1, pianoroll_plot])
+                           outputs= [pianoroll_plot, audio1, generateButton])
 
-    play_button1.click(fn=onPlayButtonPress,
-                       inputs=input_midi_file,
-                       outputs=play_button1
-    )
+    generateButton.click(fn=onGenerateButtonPressed,
+                         inputs=input_midi_file,
+                         outputs=output_midi_file
+                         )
 
 
 
