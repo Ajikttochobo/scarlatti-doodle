@@ -7,6 +7,8 @@ import ScarlattiMelodyModel
 
 # ********gradio 함수들********
 
+sampleFile = "In My Life.MID"
+
 def drawPianorollPlot(score):
     note_array = pt.load_performance_midi(score).note_array() # midi 파일을 partitura performance 객체로 변환
 
@@ -29,19 +31,25 @@ def drawPianorollPlot(score):
 
 def onMidiFileChange(inputMidiFile):
     if(inputMidiFile == None):
-        return gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
+        return gr.update(visible=True), gr.update(visible=True), gr.update(visible=False)
     else:
         return gr.update(visible=True, label=os.path.basename(inputMidiFile.name), value=drawPianorollPlot(inputMidiFile)), gr.update(visible=True, value=midiToAudio(inputMidiFile)), gr.update(visible=True)
 
 def midiToAudio(inputMidiFile):
     output_wav = "output.wav"
-    FluidSynth().midi_to_audio(inputMidiFile.name, output_wav)
+    FluidSynth().midi_to_audio(inputMidiFile if type(inputMidiFile) == str else inputMidiFile.name, output_wav)
 
     return output_wav
 
 def onGenerateButtonPressed(inputMidiFile):
     outputMidi = ScarlattiMelodyModel.runModel(inputMidi=inputMidiFile)
-    return gr.update(visible=True, value=outputMidi)
+    return gr.update(visible=True, value=outputMidi), gr.update(visible=True, value=drawPianorollPlot(outputMidi)), gr.update(visible=True, value=midiToAudio(outputMidi)), gr.update(visible=True)
+
+def onResetButtonPressed():
+     return gr.update(value=None), gr.update(value=None), gr.update(value=None), gr.update(value=None), gr.update(value=None), gr.update(value=None), gr.update(visible=False), gr.update(visible=False), gr.update(visible=True), gr.update(visible=True)
+
+def onSampleFileButtonPressed():
+     return gr.update(value=sampleFile), gr.update(visible=False), gr.update(visible=False)
 
 #********gradio 인터페이스 코드********
 
@@ -60,17 +68,27 @@ with gr.Blocks(title="Scarlatti Doodle") as demo:
             gr.Markdown("input")
             input_midi_file = gr.File(file_types= [".midi", ".mid"], label="upload midi file")
 
-            pianoroll_plot = gr.Plot(visible=False)
-            audio1 = gr.Audio(label=None, interactive=False, sources=[],type="filepath", visible=False)
-            
-            with gr.Accordion(label="input midi settings",open=False):
-                gr.Markdown("accordion!")
+            pianoroll_plot = gr.Plot()
+            audio1 = gr.Audio(label=None, interactive=False, sources=[],type="filepath")
+
+            sampleMarkdown =  gr.Markdown("Don't feel like uploading a file? Try it out with sample file!")
+            with gr.Row():
+                with gr.Column(scale=0, min_width=200):
+                    sampleFileButton = gr.Button("try with sample file", variant="link", scale=0, min_width=0)
+
 
             generateButton = gr.Button(value="Generate", variant="primary", visible=False)
 
+                 
+
         with gr.Column():
             gr.Markdown("result")
-            output_midi_file = gr.File(label=None, interactive=False, type="filepath", visible=False)
+            output_midi_file = gr.File(label=None, interactive=False, type="filepath")
+            output_pianoroll_plot = gr.Plot(visible=False)
+            audio2 = gr.Audio(label=None, interactive=False, sources=[], type="filepath")
+            resetButton = gr.Button(value="Reset", variant="secondary", visible=False)
+
+
 
     # ********ui 함수들********
 
@@ -80,8 +98,17 @@ with gr.Blocks(title="Scarlatti Doodle") as demo:
 
     generateButton.click(fn=onGenerateButtonPressed,
                          inputs=input_midi_file,
-                         outputs=output_midi_file
+                         outputs=[output_midi_file, output_pianoroll_plot, audio2, resetButton]
                          )
+
+    resetButton.click(fn = onResetButtonPressed,
+                      inputs = None,
+                      outputs = [input_midi_file, pianoroll_plot, audio1, output_midi_file, output_pianoroll_plot, audio2, resetButton, generateButton, sampleMarkdown, sampleFileButton]
+                      )
+
+    sampleFileButton.click(fn = onSampleFileButtonPressed,
+                           inputs = None,
+                           outputs = [input_midi_file, sampleFileButton, sampleMarkdown])
 
 
 

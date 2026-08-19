@@ -142,7 +142,7 @@ def runModel(inputMidi):
 
     # 음 시작, 음 지속 기준을 다르게 할 수 있음
     ONSET_THRESHOLD = 0.375   # 음 시작
-    SUSTAIN_THRESHOLD = 0.375 # 음 지속 TODO 이거 고쳐도 반영이 왜 안되지???
+    SUSTAIN_THRESHOLD = 0.375 # 음 지속 TODO 이거 고쳐도 반영이 왜 안되지??? (반영 되는지 안되는지 모르겠다...)
 
     onset_mask = probs_matrix[1] > ONSET_THRESHOLD
     sustain_mask = probs_matrix[2] > SUSTAIN_THRESHOLD # 불리언 마스킹
