@@ -57,8 +57,14 @@ with gr.Blocks(title="Scarlatti Doodle") as demo:
     gr.Markdown("# Scarlatti Doodle")
     gr.Markdown("Google Bach doodle but it's Scarlatti")
 
-    with gr.Accordion(label="About this project", open=False):
-                    gr.Markdown("accordion!")
+    with gr.Accordion(label=" 💡 Important Notes for MIDI Upload", open=False):
+                    notes_text = """
+                    ###
+                    - Please upload MIDI files under **30 seconds** (longer files will be trimmed to the first 30 seconds).
+                    - Use a **single-track** melody (multi-track files are not supported).
+                    - Upload a melody with a clear **tonality/key** (atonal or chaotic melodies may not generate good results).
+                    """
+                    gr.Markdown(notes_text)
     
     gr.Markdown("---")
 
