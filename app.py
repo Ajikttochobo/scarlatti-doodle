@@ -1,5 +1,6 @@
 import gradio as gr
 import os
+import sys
 import partitura as pt
 import matplotlib.pyplot as plt
 from midi2audio import FluidSynth
@@ -9,8 +10,15 @@ import ScarlattiMelodyModel
 
 sampleFile = "In My Life.MID"
 
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 def drawPianorollPlot(score):
-    note_array = pt.load_performance_midi(score).note_array() # midi 파일을 partitura performance 객체로 변환
+    note_array = pt.load_performance_midi(resource_path(score)).note_array() # midi 파일을 partitura performance 객체로 변환
 
     pitches = note_array['pitch'] 
     onsets = note_array['onset_sec']
@@ -118,3 +126,13 @@ with gr.Blocks(title="Scarlatti Doodle") as demo:
 
 if __name__ == "__main__":
     demo.launch(server_name="0.0.0.0", server_port=7860)
+    # 차후 PyWebView와 연결하여 데스크톱 창으로 띄울 때는 아래 방식을 사용하면 됩니다.
+    # import webview
+    # def run_gradio():
+    #     demo.launch(server_name="127.0.0.1", server_port=7860, prevent_thread_lock=True)
+    #
+    # t = threading.Thread(target=run_gradio)
+    # t.daemon = True
+    # t.start()
+    # webview.create_window("Scarlatti Doodle", "http://127.0.0.1:7860", width=1100, height=850)
+    # webview.start()

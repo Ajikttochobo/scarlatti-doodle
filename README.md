@@ -1,7 +1,5 @@
 # scarlatti-doodle
 
-### Due to hosting memory limitations, live web service was replaced with a demo video link. 🥲
-
 I made a Scarlatti version of the Google Bach doodle. You upload your melody midi file, scarlatti doodle turns it into a Scarlatti Sonata! I trained my own UNet model for this project! 
 
 ### Screenshots

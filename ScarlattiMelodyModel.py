@@ -3,6 +3,20 @@ import torch.nn as nn
 import partitura as pt
 import numpy as np
 import torch
+import resource
+import sys
+
+def get_ram_usage_mb():
+    # 현재 프로세스가 사용 중인 최대 RAM (MB 단위)
+    # Linux(Codespaces) 환경에서는 kilobytes 단위로 리턴되므로 1024로 나눔
+    return round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 2)
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 # 0. 맥북 장치 설정 (Apple Silicon GPU 가속)
 device = torch.device("mps" if torch.backends.mps.is_available() else "cpu") # metal performance shaders 사용할 수 있으면 사용하고 못하면 걍 cpu 사용
@@ -113,7 +127,7 @@ def DatasetToScore(dataset : np.ndarray):
 
 # ********모델 실행 코드********
 def runModel(inputMidi):
-    test_performance = pt.load_performance_midi(inputMidi) # 미디 파일 불러와서 partitura performance로 변환
+    test_performance = pt.load_performance_midi(resource_path(inputMidi)) # 미디 파일 불러와서 partitura performance로 변환
 
     input_data = ScoreToDataset(test_performance) # 넘파이 어레이로 변환
     input_tensor = torch.from_numpy(input_data).float() # 4d 텐서로 변환
@@ -127,7 +141,7 @@ def runModel(inputMidi):
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu") #디바이스 설정
     model = MelodyUNet(in_channels=1, num_classes=3).to(device) # 만들어둔 모델 불러옴
 
-    checkpoint = torch.load("melody_unet_checkpoint.pth", map_location=device) # 딥러닝 모델 파일 불러옴 (map_location은 모델이 저장되었을때의 장치와 지금 실행하는 컴퓨터의 장치가 달라도 에러 없이 지정한 장치로 매핑하여 불러올 수 있게 하는거)
+    checkpoint = torch.load(resource_path("melody_unet_checkpoint.pth"), map_location=device) # 딥러닝 모델 파일 불러옴 (map_location은 모델이 저장되었을때의 장치와 지금 실행하는 컴퓨터의 장치가 달라도 에러 없이 지정한 장치로 매핑하여 불러올 수 있게 하는거)
     model.load_state_dict(checkpoint) # 미리 저장해둔 가중치와 평향을 모델 객체에 덮어씌워 모델의 상태를 복원
 
     model.eval() # 평가 모드
@@ -153,5 +167,7 @@ def runModel(inputMidi):
 
     result_performance = DatasetToScore(result_matrix)
     pt.save_performance_midi(result_performance, "output_performance.mid") # 미디파일로 저장
+
+    print(f"🔥 현재 RAM 사용량: {get_ram_usage_mb()} MB")
 
     return "output_performance.mid"
